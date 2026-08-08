@@ -11,6 +11,7 @@
 </script>
 
 <svelte:head>
+	<title>Banco Estudiantil</title>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 

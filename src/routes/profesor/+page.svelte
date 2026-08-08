@@ -4,6 +4,12 @@
 
     let { data, form } = $props();
 
+    let titulo = $derived(
+        data.autenticado
+            ? 'Panel del profesor · Banco Estudiantil'
+            : 'Acceso del profesor · Banco Estudiantil'
+    );
+
     let cedulaDetectada = $state('');
     let scanKey = $state(0);
     let creditoDialog = $state(null);
@@ -36,6 +42,10 @@
         };
     }
 </script>
+
+<svelte:head>
+    <title>{titulo}</title>
+</svelte:head>
 
 {#if !data.autenticado}
     <main class="container login mt-8 mb-8">

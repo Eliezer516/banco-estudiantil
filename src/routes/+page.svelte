@@ -7,6 +7,12 @@
     let transferirDialog = $state(null);
     let reciboDialog = $state(null);
 
+    let titulo = $derived(
+        data.estudiante
+            ? `${data.estudiante.nombres} ${data.estudiante.apellidos} · Banco Estudiantil`
+            : 'Iniciar sesión · Banco Estudiantil'
+    );
+
     function formatearCedula(cedula) {
         return String(cedula)
     }
@@ -54,7 +60,7 @@
 </script>
 
 <svelte:head>
-  <title>Iniciar sesion como estudiante</title>
+  <title>{titulo}</title>
 </svelte:head>
 
 
