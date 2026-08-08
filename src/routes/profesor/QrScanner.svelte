@@ -36,7 +36,6 @@
                         const cedula = extraerCedulaDelQr(decodedText);
                         if (!Number.isNaN(cedula)) {
                             ondetect(String(cedula));
-                            detenerEscaneo();
                         }
                     },
                     (errorMessage) => console.warn(errorMessage)

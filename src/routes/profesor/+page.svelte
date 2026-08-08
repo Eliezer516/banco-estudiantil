@@ -11,7 +11,6 @@
     );
 
     let cedulaDetectada = $state('');
-    let scanKey = $state(0);
     let creditoDialog = $state(null);
     let creditoCedula = $state('');
     let creditoNombre = $state('');
@@ -22,7 +21,6 @@
 
     function reescanear() {
         cedulaDetectada = '';
-        scanKey += 1;
     }
 
     function abrirCredito(est) {
@@ -95,9 +93,7 @@
                         required
                     >
                 </label>
-                {#key scanKey}
-                    <QrScanner ondetect={alDetectar} />
-                {/key}
+                <QrScanner ondetect={alDetectar} />
                 {#if cedulaDetectada}
                     <button type="button" onclick={reescanear} data-variant="secondary" class="outline small">Escanear otro QR</button>
                 {/if}
