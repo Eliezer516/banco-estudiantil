@@ -6,6 +6,9 @@
 
     let cedulaDetectada = $state('');
     let scanKey = $state(0);
+    let creditoDialog = $state(null);
+    let creditoCedula = $state('');
+    let creditoNombre = $state('');
 
     function alDetectar(cedula) {
         cedulaDetectada = cedula;
@@ -15,10 +18,27 @@
         cedulaDetectada = '';
         scanKey += 1;
     }
+
+    function abrirCredito(est) {
+        creditoCedula = String(est.cedula);
+        creditoNombre = `${est.nombres} ${est.apellidos}`;
+        creditoDialog?.showModal();
+    }
+
+    function creditoEnhancer() {
+        return async ({ result, update }) => {
+            await update();
+
+            if (result.type === 'success' && result.data?.creditoOk) {
+                creditoDialog?.close();
+                window.ot?.toast?.(`Puntos añadidos a ${creditoNombre}`, 'Listo', { variant: 'success' });
+            }
+        };
+    }
 </script>
 
 {#if !data.autenticado}
-    <main class="container mt-8 mb-8">
+    <main class="container login mt-8 mb-8">
         <article class="card" style="max-width: 420px;">
             <header>
                 <h1>Acceso del profesor</h1>
@@ -87,7 +107,7 @@
 
         <article class="card mt-6">
             <h2>Estudiantes</h2>
-            <div class="table">
+            <div class="table tabla-estudiantes">
                 <table>
                     <thead>
                         <tr>
@@ -96,16 +116,18 @@
                             <th>Apellidos</th>
                             <th>Saldo</th>
                             <th>QR</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {#each data.estudiantes as est}
                             <tr>
-                                <td>{est.cedula}</td>
-                                <td>{est.nombres}</td>
-                                <td>{est.apellidos}</td>
-                                <td><span class="badge" data-variant={est.saldo > 0 ? 'success' : 'secondary'}>${est.saldo.toFixed(2)}</span></td>
-                                <td><img src={est.qrCode} alt="QR de {est.nombres} {est.apellidos}" width="80" /></td>
+                                <td data-label="Cédula">{est.cedula}</td>
+                                <td data-label="Nombres">{est.nombres}</td>
+                                <td data-label="Apellidos">{est.apellidos}</td>
+                                <td data-label="Saldo"><span class="badge" data-variant={est.saldo > 0 ? 'success' : 'secondary'}>${est.saldo.toFixed(2)}</span></td>
+                                <td data-label="QR"><img src={est.qrCode} alt="QR de {est.nombres} {est.apellidos}" width="80" /></td>
+                                <td data-label=""><button type="button" class="small" onclick={() => abrirCredito(est)}>Añadir puntos</button></td>
                             </tr>
                         {/each}
                     </tbody>
@@ -113,6 +135,33 @@
             </div>
         </article>
     </main>
+
+    <dialog id="dialog-creditar" bind:this={creditoDialog} closedby="any">
+        <form method="POST" action="?/credito" use:enhance={creditoEnhancer}>
+            <header>
+                <h3>Añadir puntos</h3>
+                <p class="text-light">{creditoNombre}</p>
+            </header>
+            <div class="vstack">
+                <input type="hidden" name="cedula" value={creditoCedula}>
+                <label data-field>
+                    Monto
+                    <input type="number" name="monto" step="0.01" min="0.01" required>
+                </label>
+                <label data-field>
+                    Descripción
+                    <input type="text" name="descripcion" maxlength="200" placeholder="Participación, bonificación, premio...">
+                </label>
+                {#if form?.creditoError}
+                    <div role="alert" data-variant="error">{form.creditoError}</div>
+                {/if}
+            </div>
+            <footer>
+                <button type="button" commandfor="dialog-creditar" command="close" class="outline">Cancelar</button>
+                <button>Añadir puntos</button>
+            </footer>
+        </form>
+    </dialog>
 
     <dialog id="dialog-registrar" closedby="any">
         <form method="POST" action="?/registrar" use:enhance>
@@ -181,3 +230,65 @@
         </form>
     </dialog>
 {/if}
+
+<style>
+    main.login {
+        display: grid;
+        place-items: center;
+        min-height: 100dvh;
+    }
+    @media (max-width: 640px) {
+        .tabla-estudiantes thead {
+            display: none;
+        }
+
+        .tabla-estudiantes,
+        .tabla-estudiantes tbody,
+        .tabla-estudiantes tr,
+        .tabla-estudiantes td {
+            display: block;
+            width: 100%;
+        }
+
+        .tabla-estudiantes {
+            min-width: 0;
+        }
+
+        .tabla-estudiantes tbody tr {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-medium);
+            margin-bottom: var(--space-3);
+            padding: var(--space-2) var(--space-3);
+        }
+
+        .tabla-estudiantes td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-2) 0;
+            border: none;
+        }
+
+        .tabla-estudiantes td::before {
+            content: attr(data-label);
+            font-weight: var(--font-semibold);
+            color: var(--muted-foreground);
+        }
+
+        .tabla-estudiantes td[data-label=""]::before {
+            display: none;
+        }
+
+        .tabla-estudiantes td:last-child {
+            display: block;
+            border-top: 1px solid var(--border);
+            margin-top: var(--space-2);
+            padding-top: var(--space-3);
+        }
+
+        .tabla-estudiantes td:last-child button {
+            width: 100%;
+        }
+    }
+</style>

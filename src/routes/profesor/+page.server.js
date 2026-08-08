@@ -106,6 +106,51 @@ export const actions = {
         return { debitOk: true };
     },
 
+    credito: async ({ request, cookies }) => {
+        if (cookies.get(SESSION_COOKIE) !== 'ok') {
+            throw error(401, 'No autorizado');
+        }
+
+        const data = Object.fromEntries(await request.formData());
+        const monto = Number(data.monto);
+        const cedula = extraerCedula(data.cedula);
+        const descripcion = String(data.descripcion ?? '').trim();
+
+        if (Number.isNaN(monto) || monto <= 0) {
+            return fail(400, { creditoError: 'Monto inválido' });
+        }
+        if (Number.isNaN(cedula)) {
+            return fail(400, { creditoError: 'QR o cédula inválido' });
+        }
+        if (descripcion.length > 200) {
+            return fail(400, { creditoError: 'La descripción no puede superar los 200 caracteres' });
+        }
+
+        const estudiante = await db.select().from(estudiantes).where(eq(estudiantes.cedula, cedula)).get();
+
+        if (!estudiante) {
+            return fail(404, { creditoError: 'Estudiante no encontrado' });
+        }
+
+        const nuevoSaldo = Number(estudiante.saldo) + monto;
+
+        await db.transaction(async (tx) => {
+            await tx.update(estudiantes).set({ saldo: nuevoSaldo }).where(eq(estudiantes.cedula, cedula));
+
+            await tx.insert(transacciones).values({
+                id: randomBytes(8).toString('hex'),
+                cedulaOrigen: cedula,
+                cedulaDestino: cedula,
+                monto,
+                descripcion: descripcion || 'Acreditado por el profesor',
+                timestamp: formatTimestamp(),
+                tipo: 'credito'
+            });
+        });
+
+        return { creditoOk: true };
+    },
+
     importar: async ({ request, cookies }) => {
         if (cookies.get(SESSION_COOKIE) !== 'ok') {
             throw error(401, 'No autorizado');

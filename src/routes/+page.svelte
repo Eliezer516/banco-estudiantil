@@ -111,10 +111,14 @@
                                 {@const esOrigen = t.cedulaOrigen === data.estudiante.cedula}
                                 {@const esDestino = t.cedulaDestino === data.estudiante.cedula}
                                 {@const esProfesor = esOrigen && esDestino}
+                                {@const esCreditoProfesor = esProfesor && t.tipo === 'credito'}
+                                {@const esDebitoProfesor = esProfesor && t.tipo === 'debito'}
                                 {@const filaClase = esProfesor ? '' : esOrigen ? 'hist-debito' : 'hist-credito'}
                                 <tr class={filaClase}>
                                     <td>
-                                        {#if esProfesor}
+                                        {#if esCreditoProfesor}
+                                            <span class="badge" data-variant="success">Acreditado</span>
+                                        {:else if esDebitoProfesor}
                                             <span class="badge" data-variant="secondary">Débito</span>
                                         {:else if esOrigen}
                                             <span class="badge" data-variant="danger">Enviado</span>
@@ -199,7 +203,7 @@
         {/if}
     </dialog>
 {:else}
-    <main class="container mt-8 mb-8">
+    <main class="container login mt-8 mb-8">
         <article class="card" style="max-width: 420px;">
             <header>
                 <h1>Iniciar sesión</h1>
@@ -220,6 +224,11 @@
 {/if}
 
 <style>
+    main.login {
+        display: grid;
+        place-items: center;
+        min-height: 100dvh;
+    }
     .virtual-card {
         position: relative;
         overflow: hidden;
