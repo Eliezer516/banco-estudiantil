@@ -8,7 +8,7 @@
     let reciboDialog = $state(null);
 
     function formatearCedula(cedula) {
-        return String(cedula).replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+        return String(cedula)
     }
 
     function toast(mensaje, titulo = '', variante = 'success') {
@@ -102,7 +102,7 @@
                             <tr>
                                 <th>Tipo</th>
                                 <th>Monto</th>
-                                <th>Con</th>
+                                <th>Concepto</th>
                                 <th>Fecha</th>
                             </tr>
                         </thead>
@@ -110,33 +110,30 @@
                             {#each data.historial as t}
                                 {@const esOrigen = t.cedulaOrigen === data.estudiante.cedula}
                                 {@const esDestino = t.cedulaDestino === data.estudiante.cedula}
-                                <tr>
+                                {@const esProfesor = esOrigen && esDestino}
+                                {@const filaClase = esProfesor ? '' : esOrigen ? 'hist-debito' : 'hist-credito'}
+                                <tr class={filaClase}>
                                     <td>
-                                        {#if esOrigen && esDestino}
-                                            <span class="badge" data-variant="warning">Débito</span>
+                                        {#if esProfesor}
+                                            <span class="badge" data-variant="secondary">Débito</span>
                                         {:else if esOrigen}
-                                            <span class="badge">Enviado</span>
+                                            <span class="badge" data-variant="danger">Enviado</span>
                                         {:else if esDestino}
                                             <span class="badge" data-variant="success">Recibido</span>
                                         {/if}
                                     </td>
                                     <td>
                                         {#if esOrigen && esDestino}
-                                            -${t.monto.toFixed(2)}
+                                            ${t.monto.toFixed(2)}
                                         {:else if esOrigen}
-                                            -${t.monto.toFixed(2)}
+                                            ${t.monto.toFixed(2)}
                                         {:else if esDestino}
-                                            +${t.monto.toFixed(2)}
+                                            ${t.monto.toFixed(2)}
                                         {/if}
                                     </td>
                                     <td>
-                                        {#if esOrigen && !esDestino}
-                                            a {t.cedulaDestino}
-                                        {:else if esDestino && !esOrigen}
-                                            de {t.cedulaOrigen}
-                                        {/if}
                                         {#if t.descripcion}
-                                            <span class="text-light">({t.descripcion})</span>
+                                            <span class="text-light">{t.descripcion}</span>
                                         {/if}
                                     </td>
                                     <td>{t.timestamp}</td>
@@ -360,5 +357,18 @@
         font-size: var(--text-6);
         text-align: left;
         overflow-wrap: anywhere;
+    }
+
+    .hist-debito {
+        background-color: color-mix(in srgb, var(--danger) 10%, transparent);
+    }
+
+    .hist-credito {
+        background-color: color-mix(in srgb, var(--success) 10%, transparent);
+    }
+
+    .table .hist-debito:hover,
+    .table .hist-credito:hover {
+        background-color: color-mix(in srgb, var(--accent) 50%, transparent);
     }
 </style>
