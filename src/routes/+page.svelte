@@ -53,6 +53,11 @@
     }
 </script>
 
+<svelte:head>
+  <title>Iniciar sesion como estudiante</title>
+</svelte:head>
+
+
 {#if data.estudiante}
     <main class="container mt-8 mb-8">
         <header class="hstack justify-between">
