@@ -285,5 +285,75 @@ export const actions = {
         }
 
         return { registrarOk: true };
+    },
+
+    editar: async ({ request, cookies }) => {
+        if (cookies.get(SESSION_COOKIE) !== 'ok') {
+            throw error(401, 'No autorizado');
+        }
+
+        const data = Object.fromEntries(await request.formData());
+        const cedulaOriginal = Number(data.cedulaOriginal);
+        const cedula = Number(data.cedula);
+        const nombres = String(data.nombres ?? '').trim();
+        const apellidos = String(data.apellidos ?? '').trim();
+        const saldo = data.saldo === '' || data.saldo === undefined ? 0 : Number(data.saldo);
+
+        if (!Number.isInteger(cedulaOriginal) || !Number.isInteger(cedula)) {
+            return fail(400, { editarError: 'Cédula inválida' });
+        }
+        if (!nombres || !apellidos) {
+            return fail(400, { editarError: 'Completa nombres y apellidos' });
+        }
+        if (Number.isNaN(saldo) || saldo < 0) {
+            return fail(400, { editarError: 'Saldo inválido' });
+        }
+
+        if (cedulaOriginal !== cedula) {
+            const existe = await db.select().from(estudiantes).where(eq(estudiantes.cedula, cedula)).get();
+            if (existe) {
+                return fail(400, { editarError: 'Ya existe un estudiante con esa cédula' });
+            }
+            await db.transaction(async (tx) => {
+                await tx.delete(transacciones).where(eq(transacciones.cedulaOrigen, cedulaOriginal));
+                await tx.delete(estudiantes).where(eq(estudiantes.cedula, cedulaOriginal));
+                await tx.insert(estudiantes).values({
+                    cedula,
+                    nombres,
+                    apellidos,
+                    saldo,
+                    qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${cedula}`
+                });
+            });
+        } else {
+            await db.update(estudiantes).set({ nombres, apellidos, saldo }).where(eq(estudiantes.cedula, cedula));
+        }
+
+        return { editarOk: true };
+    },
+
+    eliminar: async ({ request, cookies }) => {
+        if (cookies.get(SESSION_COOKIE) !== 'ok') {
+            throw error(401, 'No autorizado');
+        }
+
+        const data = Object.fromEntries(await request.formData());
+        const cedula = Number(data.cedula);
+
+        if (Number.isNaN(cedula)) {
+            return fail(400, { eliminarError: 'Cédula inválida' });
+        }
+
+        const estudiante = await db.select().from(estudiantes).where(eq(estudiantes.cedula, cedula)).get();
+        if (!estudiante) {
+            return fail(404, { eliminarError: 'Estudiante no encontrado' });
+        }
+
+        await db.transaction(async (tx) => {
+            await tx.delete(transacciones).where(eq(transacciones.cedulaOrigen, cedula));
+            await tx.delete(estudiantes).where(eq(estudiantes.cedula, cedula));
+        });
+
+        return { eliminarOk: true };
     }
 };

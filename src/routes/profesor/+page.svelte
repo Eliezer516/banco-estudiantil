@@ -15,6 +15,13 @@
     let creditoCedula = $state('');
     let creditoNombre = $state('');
 
+    let editarDialog = $state(null);
+    let editarEstudiante = $state(null);
+
+    let eliminarDialog = $state(null);
+    let eliminarCedula = $state('');
+    let eliminarNombre = $state('');
+
     function alDetectar(cedula) {
         cedulaDetectada = cedula;
     }
@@ -29,6 +36,17 @@
         creditoDialog?.showModal();
     }
 
+    function abrirEditar(est) {
+        editarEstudiante = { ...est };
+        editarDialog?.showModal();
+    }
+
+    function abrirEliminar(est) {
+        eliminarCedula = String(est.cedula);
+        eliminarNombre = `${est.nombres} ${est.apellidos}`;
+        eliminarDialog?.showModal();
+    }
+
     function creditoEnhancer() {
         return async ({ result, update }) => {
             await update();
@@ -36,6 +54,28 @@
             if (result.type === 'success' && result.data?.creditoOk) {
                 creditoDialog?.close();
                 window.ot?.toast?.(`Puntos añadidos a ${creditoNombre}`, 'Listo', { variant: 'success' });
+            }
+        };
+    }
+
+    function editarEnhancer() {
+        return async ({ result, update }) => {
+            await update();
+
+            if (result.type === 'success' && result.data?.editarOk) {
+                editarDialog?.close();
+                window.ot?.toast?.('Estudiante actualizado', 'Listo', { variant: 'success' });
+            }
+        };
+    }
+
+    function eliminarEnhancer() {
+        return async ({ result, update }) => {
+            await update();
+
+            if (result.type === 'success' && result.data?.eliminarOk) {
+                eliminarDialog?.close();
+                window.ot?.toast?.('Estudiante eliminado', 'Listo', { variant: 'success' });
             }
         };
     }
@@ -133,7 +173,13 @@
                                 <td data-label="Apellidos">{est.apellidos}</td>
                                 <td data-label="Saldo"><span class="badge" data-variant={est.saldo > 0 ? 'success' : 'secondary'}>${est.saldo.toFixed(2)}</span></td>
                                 <td data-label="QR"><img src={est.qrCode} alt="QR de {est.nombres} {est.apellidos}" width="80" /></td>
-                                <td data-label=""><button type="button" class="small" onclick={() => abrirCredito(est)}>Añadir puntos</button></td>
+                                <td data-label="">
+                                    <div class="hstack">
+                                        <button type="button" class="small" onclick={() => abrirCredito(est)}>Añadir puntos</button>
+                                        <button type="button" class="small" onclick={() => abrirEditar(est)}>Editar</button>
+                                        <button type="button" class="small" onclick={() => abrirEliminar(est)}>Eliminar</button>
+                                    </div>
+                                </td>
                             </tr>
                         {/each}
                     </tbody>
@@ -165,6 +211,55 @@
             <footer>
                 <button type="button" commandfor="dialog-creditar" command="close" class="outline">Cancelar</button>
                 <button>Añadir puntos</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog id="dialog-editar" bind:this={editarDialog} closedby="any">
+        <form method="POST" action="?/editar" use:enhance={editarEnhancer}>
+            <header>
+                <h3>Editar estudiante</h3>
+                <p class="text-light">Modifica los datos del estudiante.</p>
+            </header>
+            <div class="vstack">
+                <input type="hidden" name="cedulaOriginal" value={editarEstudiante?.cedula}>
+                <label data-field>
+                    Cédula
+                    <input type="number" name="cedula" required value={editarEstudiante?.cedula}>
+                </label>
+                <label data-field>
+                    Nombres
+                    <input type="text" name="nombres" required value={editarEstudiante?.nombres}>
+                </label>
+                <label data-field>
+                    Apellidos
+                    <input type="text" name="apellidos" required value={editarEstudiante?.apellidos}>
+                </label>
+                <label data-field>
+                    Saldo
+                    <input type="number" name="saldo" step="0.01" min="0" value={editarEstudiante?.saldo}>
+                </label>
+                {#if form?.editarError}
+                    <div role="alert" data-variant="error">{form.editarError}</div>
+                {/if}
+            </div>
+            <footer>
+                <button type="button" commandfor="dialog-editar" command="close" class="outline">Cancelar</button>
+                <button>Guardar cambios</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog id="dialog-eliminar" bind:this={eliminarDialog} closedby="any">
+        <form method="POST" action="?/eliminar" use:enhance={eliminarEnhancer}>
+            <header>
+                <h3>Eliminar estudiante</h3>
+                <p>¿Estás seguro de que quieres eliminar a {eliminarNombre}?</p>
+            </header>
+            <input type="hidden" name="cedula" value={eliminarCedula}>
+            <footer class="hstack">
+                <button type="button" commandfor="dialog-eliminar" command="close" class="outline">Cancelar</button>
+                <button data-variant="danger">Eliminar</button>
             </footer>
         </form>
     </dialog>
