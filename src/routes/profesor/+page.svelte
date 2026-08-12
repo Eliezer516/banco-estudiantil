@@ -22,6 +22,21 @@
     let eliminarCedula = $state('');
     let eliminarNombre = $state('');
 
+    let busqueda = $state('');
+
+    let estudiantesFiltrados = $derived(
+        data.estudiantes.filter((est) => {
+            const q = busqueda.trim().toLowerCase();
+            if (!q) return true;
+            return (
+                String(est.cedula).includes(q) ||
+                est.nombres.toLowerCase().includes(q) ||
+                est.apellidos.toLowerCase().includes(q) ||
+                `${est.nombres} ${est.apellidos}`.toLowerCase().includes(q)
+            );
+        })
+    );
+
     function alDetectar(cedula) {
         cedulaDetectada = cedula;
     }
@@ -152,39 +167,50 @@
         </article>
 
         <article class="card mt-6">
-            <h2>Estudiantes</h2>
-            <div class="table tabla-estudiantes">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Cédula</th>
-                            <th>Nombres</th>
-                            <th>Apellidos</th>
-                            <th>Saldo</th>
-                            <th>QR</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each data.estudiantes as est}
-                            <tr>
-                                <td data-label="Cédula">{est.cedula}</td>
-                                <td data-label="Nombres">{est.nombres}</td>
-                                <td data-label="Apellidos">{est.apellidos}</td>
-                                <td data-label="Saldo"><span class="badge" data-variant={est.saldo > 0 ? 'success' : 'secondary'}>${est.saldo.toFixed(2)}</span></td>
-                                <td data-label="QR"><img src={est.qrCode} alt="QR de {est.nombres} {est.apellidos}" width="80" /></td>
-                                <td data-label="">
-                                    <div class="hstack">
-                                        <button type="button" class="small" onclick={() => abrirCredito(est)}>Añadir puntos</button>
-                                        <button type="button" class="small" onclick={() => abrirEditar(est)}>Editar</button>
-                                        <button type="button" class="small" onclick={() => abrirEliminar(est)}>Eliminar</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
+            <div class="hstack justify-between">
+                <h2>Estudiantes</h2>
+                <span class="badge" data-variant="secondary">{estudiantesFiltrados.length} de {data.estudiantes.length}</span>
             </div>
+            <label data-field class="mt-4">
+                Buscar estudiante
+                <input type="search" bind:value={busqueda} placeholder="Buscar por cédula, nombre o apellido...">
+            </label>
+            {#if estudiantesFiltrados.length === 0}
+                <p class="text-light mt-4">No se encontraron estudiantes.</p>
+            {:else}
+                <div class="table tabla-estudiantes">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cédula</th>
+                                <th>Nombres</th>
+                                <th>Apellidos</th>
+                                <th>Saldo</th>
+                                <th>QR</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each estudiantesFiltrados as est}
+                                <tr>
+                                    <td data-label="Cédula">{est.cedula}</td>
+                                    <td data-label="Nombres">{est.nombres}</td>
+                                    <td data-label="Apellidos">{est.apellidos}</td>
+                                    <td data-label="Saldo"><span class="badge" data-variant={est.saldo > 0 ? 'success' : 'secondary'}>${est.saldo.toFixed(2)}</span></td>
+                                    <td data-label="QR"><img src={est.qrCode} alt="QR de {est.nombres} {est.apellidos}" width="80" /></td>
+                                    <td data-label="">
+                                        <div class="hstack">
+                                            <button type="button" class="small" onclick={() => abrirCredito(est)}>Añadir puntos</button>
+                                            <button type="button" class="small" onclick={() => abrirEditar(est)}>Editar</button>
+                                            <button type="button" class="small" onclick={() => abrirEliminar(est)}>Eliminar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+            {/if}
         </article>
     </main>
 
@@ -386,6 +412,11 @@
             border-top: 1px solid var(--border);
             margin-top: var(--space-2);
             padding-top: var(--space-3);
+        }
+
+        .tabla-estudiantes td:last-child .hstack {
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .tabla-estudiantes td:last-child button {
