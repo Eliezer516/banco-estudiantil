@@ -19,7 +19,7 @@
 	<title>Banco Estudiantil</title>
 	<link rel="icon" href={favicon} />
 	<link rel="manifest" href="/manifest.webmanifest" />
-	<meta name="theme-color" content="#1e3a8a" />
+	<meta name="theme-color" content="#574747" />
 	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
