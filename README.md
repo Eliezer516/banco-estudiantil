@@ -1,5 +1,8 @@
 # Banco Estudiantil
 
+<a href="https://www.buymeacoffee.com/eliezerlz" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+
 Sistema de gestión de puntos para instituciones educativas. Permite administrar el saldo de los estudiantes, transferir puntos entre compañeros y repartir bonificaciones desde el panel del profesor, todo con soporte para dispositivos móviles y uso sin conexión (PWA).
 
 > **Estado:** proyecto activo, en uso dentro de un aula. Se distribuye como referencia y punto de partida para proyectos similares.
