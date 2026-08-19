@@ -398,6 +398,7 @@
         margin: 0;
         padding: var(--space-2) var(--space-4);
         background: transparent;
+        color: var(--primary);
     }
 
     .switch-group button.active {
