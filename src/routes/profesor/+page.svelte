@@ -11,6 +11,7 @@
     );
 
     let cedulaDetectada = $state('');
+    let modo = $state('debito');
     let creditoDialog = $state(null);
     let creditoCedula = $state('');
     let creditoNombre = $state('');
@@ -136,8 +137,14 @@
         </header>
 
         <article class="card mt-6">
-            <h2>Debitar puntos</h2>
-            <form method="POST" action="?/debit" class="vstack" use:enhance>
+            <div class="hstack justify-between">
+                <h2>{modo === 'debito' ? 'Debitar puntos' : 'Añadir puntos'}</h2>
+                <div class="switch-group" role="group" aria-label="Modo de operación">
+                    <button type="button" class:active={modo === 'debito'} onclick={() => (modo = 'debito')}>Debitar</button>
+                    <button type="button" class:active={modo === 'credito'} onclick={() => (modo = 'credito')}>Añadir</button>
+                </div>
+            </div>
+            <form method="POST" action={modo === 'debito' ? '?/debit' : '?/credito'} class="vstack mt-4" use:enhance>
                 <label data-field>
                     QR o cédula del estudiante
                     <input
@@ -156,13 +163,26 @@
                     Monto
                     <input type="number" name="monto" step="0.01" min="0.01" required>
                 </label>
-                <button>Debitar</button>
+                <label data-field>
+                    Descripción
+                    <input type="text" name="descripcion" maxlength="200" placeholder="Motivo de la operación...">
+                </label>
+                <button>{modo === 'debito' ? 'Debitar' : 'Añadir puntos'}</button>
             </form>
-            {#if form?.debitError}
-                <div role="alert" data-variant="error" class="mt-4">{form.debitError}</div>
-            {/if}
-            {#if form?.debitOk}
-                <div role="alert" data-variant="success" class="mt-4">Débito realizado correctamente.</div>
+            {#if modo === 'debito'}
+                {#if form?.debitError}
+                    <div role="alert" data-variant="error" class="mt-4">{form.debitError}</div>
+                {/if}
+                {#if form?.debitOk}
+                    <div role="alert" data-variant="success" class="mt-4">Débito realizado correctamente.</div>
+                {/if}
+            {:else}
+                {#if form?.creditoError}
+                    <div role="alert" data-variant="error" class="mt-4">{form.creditoError}</div>
+                {/if}
+                {#if form?.creditoOk}
+                    <div role="alert" data-variant="success" class="mt-4">Puntos añadidos correctamente.</div>
+                {/if}
             {/if}
         </article>
 
@@ -364,6 +384,27 @@
         place-items: center;
         min-height: 100dvh;
     }
+
+    .switch-group {
+        display: inline-flex;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-medium);
+        overflow: hidden;
+    }
+
+    .switch-group button {
+        border: none;
+        border-radius: 0;
+        margin: 0;
+        padding: var(--space-2) var(--space-4);
+        background: transparent;
+    }
+
+    .switch-group button.active {
+        background: var(--primary);
+        color: var(--primary-foreground);
+    }
+
     @media (max-width: 640px) {
         .tabla-estudiantes thead {
             display: none;

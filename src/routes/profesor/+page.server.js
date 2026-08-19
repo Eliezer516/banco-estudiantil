@@ -70,12 +70,16 @@ export const actions = {
         const data = Object.fromEntries(await request.formData());
         const monto = Number(data.monto);
         const cedula = extraerCedula(data.cedula);
+        const descripcion = String(data.descripcion ?? '').trim();
 
         if (Number.isNaN(monto) || monto <= 0) {
             return fail(400, { debitError: 'Monto inválido' });
         }
         if (Number.isNaN(cedula)) {
             return fail(400, { debitError: 'QR o cédula inválido' });
+        }
+        if (descripcion.length > 200) {
+            return fail(400, { debitError: 'La descripción no puede superar los 200 caracteres' });
         }
 
         const estudiante = await db.select().from(estudiantes).where(eq(estudiantes.cedula, cedula)).get();
@@ -97,7 +101,7 @@ export const actions = {
                 cedulaOrigen: cedula,
                 cedulaDestino: cedula,
                 monto,
-                descripcion: 'Débito realizado por el profesor',
+                descripcion: descripcion || 'Débito realizado por el profesor',
                 timestamp: formatTimestamp(),
                 tipo: 'debito'
             });
