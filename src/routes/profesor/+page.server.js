@@ -1,5 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import { env } from '$env/dynamic/private';
 import { db } from '../../lib/server/db/index.js'
@@ -31,11 +31,14 @@ function normalizarClave(clave) {
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ cookies }) {
     if (cookies.get(SESSION_COOKIE) !== 'ok') {
-        return { autenticado: false, estudiantes: [] };
+        return { autenticado: false, estudiantes: [], historial: [] };
     }
 
-    const lista = await db.select().from(estudiantes);
-    return { autenticado: true, estudiantes: lista };
+    const [lista, historial] = await Promise.all([
+        db.select().from(estudiantes),
+        db.select().from(transacciones).orderBy(desc(transacciones.timestamp))
+    ]);
+    return { autenticado: true, estudiantes: lista, historial };
 }
 
 export const actions = {

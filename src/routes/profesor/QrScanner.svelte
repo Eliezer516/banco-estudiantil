@@ -61,7 +61,7 @@
     }
 </script>
 
-<div id="reader" style="width: 100%; max-width: 400px; margin: 1rem 0;"></div>
+<div id="reader" style="width: 100%; max-width: 400px; margin: 1rem auto;"></div>
 {#if errorEscaneo}
     <p>{errorEscaneo}</p>
 {/if}

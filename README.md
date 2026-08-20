@@ -58,13 +58,13 @@ Está pensado para funcionar en dispositivos móviles, con escaneo de códigos Q
 - **Autenticación por contraseña.** Configurada mediante variable de entorno.
 - **Operaciones de puntos con un mismo escáner.** Un selector permite alternar entre **debitar** y **añadir puntos**; ambos modos incluyen campo de descripción opcional.
 - **Débito de puntos.** El monto se descuenta del saldo del estudiante.
-- **Crédito de puntos.** Permite repartir bonificaciones (por ejemplo, repartos semanales). Accesible tanto desde el selector del escáner como directamente desde cada fila de la tabla.
+- **Crédito de puntos.** Permite repartir bonificaciones (por ejemplo, repartos semanales). Accesible tanto desde el selector del escáner como directamente desde cada tarjeta de estudiante.
 - **Escaneo QR en vivo.** La cámara permanece activa durante toda la sesión; permite escanear múltiples códigos sin recargar la página, en modo débito o crédito.
 - **Registro individual de estudiantes.**
 - **Importación masiva** desde archivos `.xlsx`, `.xls` o `.csv`, con reporte de filas agregadas, duplicadas e inválidas.
 - **Búsqueda en tiempo real** por cédula, nombre o apellido.
 - **Edición y eliminación** de estudiantes, con diálogos de confirmación.
-- **Tablas responsive.** En pantallas pequeñas, las filas se reordenan como tarjetas con etiquetas por campo.
+- **Vistas de tarjetas en lugar de tablas.** Los estudiantes y el historial se muestran como tarjetas (sin scroll horizontal). En escritorio el panel se organiza en tres columnas (lector QR, estudiantes y transacciones); en móvil se navega entre estudiantes y transacciones mediante pestañas.
 
 ### Aplicación web progresiva (PWA)
 
@@ -151,9 +151,9 @@ npm run preview
 
 1. Accede a `/profesor` e introduce la contraseña configurada en `TEACHER_PASSWORD`.
 2. **Operaciones con el escáner**: usa el selector para elegir **Debitar** o **Añadir**, escanea el QR del estudiante (la cámara se mantiene activa) o pega la cédula, indica el monto y una descripción opcional, y confirma.
-3. **Añadir puntos**: también puedes usar el botón de la fila del estudiante en la tabla y especificar monto y descripción.
+3. **Añadir puntos**: también puedes usar el botón de la tarjeta del estudiante y especificar monto y descripción.
 4. **Registrar / Importar**: alta individual o masiva desde archivos `.xlsx`/`.csv`.
-5. **Buscar, editar o eliminar** estudiantes desde la tabla, que en móviles se muestra como tarjetas.
+5. **Buscar, editar o eliminar** estudiantes desde la lista de tarjetas.
 
 ## Estructura del proyecto
 

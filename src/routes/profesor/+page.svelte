@@ -12,6 +12,7 @@
 
     let cedulaDetectada = $state('');
     let modo = $state('debito');
+    let pestana = $state('estudiantes');
     let creditoDialog = $state(null);
     let creditoCedula = $state('');
     let creditoNombre = $state('');
@@ -24,6 +25,10 @@
     let eliminarNombre = $state('');
 
     let busqueda = $state('');
+
+    let nombresPorCedula = $derived(
+        new Map(data.estudiantes.map((e) => [e.cedula, `${e.nombres} ${e.apellidos}`]))
+    );
 
     let estudiantesFiltrados = $derived(
         data.estudiantes.filter((est) => {
@@ -136,9 +141,10 @@
             </div>
         </header>
 
-        <article class="card mt-6">
-            <div class="hstack justify-between">
-                <h2>{modo === 'debito' ? 'Debitar puntos' : 'Añadir puntos'}</h2>
+        <div class="panel-grid">
+            <article class="card">
+                <div class="hstack justify-between">
+                    <h2>{modo === 'debito' ? 'Debitar puntos' : 'Añadir puntos'}</h2>
                 <div class="switch-group" role="group" aria-label="Modo de operación">
                     <button type="button" class:active={modo === 'debito'} onclick={() => (modo = 'debito')}>Debitar</button>
                     <button type="button" class:active={modo === 'credito'} onclick={() => (modo = 'credito')}>Añadir</button>
@@ -184,11 +190,16 @@
                     <div role="alert" data-variant="success" class="mt-4">Puntos añadidos correctamente.</div>
                 {/if}
             {/if}
-        </article>
+            </article>
 
-        <article class="card mt-6">
-            <div class="hstack justify-between">
-                <h2>Estudiantes</h2>
+            <div class="switch-group pestanas-barra" role="tablist">
+                <button type="button" class:active={pestana === 'estudiantes'} onclick={() => (pestana = 'estudiantes')}>Estudiantes</button>
+                <button type="button" class:active={pestana === 'transacciones'} onclick={() => (pestana = 'transacciones')}>Transacciones</button>
+            </div>
+
+            <article class="card pestana-estudiantes" class:pestana-activa={pestana === 'estudiantes'}>
+                <div class="hstack justify-between">
+                    <h2>Estudiantes</h2>
                 <span class="badge" data-variant="secondary">{estudiantesFiltrados.length} de {data.estudiantes.length}</span>
             </div>
             <label data-field class="mt-4">
@@ -198,40 +209,62 @@
             {#if estudiantesFiltrados.length === 0}
                 <p class="text-light mt-4">No se encontraron estudiantes.</p>
             {:else}
-                <div class="table tabla-estudiantes">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cédula</th>
-                                <th>Nombres</th>
-                                <th>Apellidos</th>
-                                <th>Saldo</th>
-                                <th>QR</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {#each estudiantesFiltrados as est}
-                                <tr>
-                                    <td data-label="Cédula">{est.cedula}</td>
-                                    <td data-label="Nombres">{est.nombres}</td>
-                                    <td data-label="Apellidos">{est.apellidos}</td>
-                                    <td data-label="Saldo"><span class="badge" data-variant={est.saldo > 0 ? 'success' : 'secondary'}>${est.saldo.toFixed(2)}</span></td>
-                                    <td data-label="QR"><img src={est.qrCode} alt="QR de {est.nombres} {est.apellidos}" width="80" /></td>
-                                    <td data-label="">
-                                        <div class="hstack">
-                                            <button type="button" class="small" onclick={() => abrirCredito(est)}>Añadir puntos</button>
-                                            <button type="button" class="small" onclick={() => abrirEditar(est)}>Editar</button>
-                                            <button type="button" class="small" onclick={() => abrirEliminar(est)}>Eliminar</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {/each}
-                        </tbody>
-                    </table>
+                <div class="tarjetas">
+                    {#each estudiantesFiltrados as est}
+                        <div class="tarjeta tarjeta-estudiante">
+                            <img class="qr" src={est.qrCode} alt="QR de {est.nombres} {est.apellidos}" />
+                            <div class="cuerpo">
+                                <div class="hstack justify-between">
+                                    <strong>{est.nombres} {est.apellidos}</strong>
+                                    <span class="badge" data-variant={est.saldo > 0 ? 'success' : 'secondary'}>${est.saldo.toFixed(2)}</span>
+                                </div>
+                                <p class="text-light">Cédula: {est.cedula}</p>
+                                <div class="hstack">
+                                    <button type="button" class="small" onclick={() => abrirCredito(est)}>Añadir puntos</button>
+                                    <button type="button" class="small" onclick={() => abrirEditar(est)}>Editar</button>
+                                    <button type="button" class="small" onclick={() => abrirEliminar(est)}>Eliminar</button>
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
                 </div>
             {/if}
         </article>
+
+        <article class="card pestana-transacciones" class:pestana-activa={pestana === 'transacciones'}>
+                <h2>Historial de transacciones</h2>
+                {#if data.historial.length === 0}
+                    <p class="text-light mt-4">Aún no hay transacciones.</p>
+                {:else}
+                    <div class="tarjetas">
+                        {#each data.historial as t}
+                            {@const esProfesor = t.cedulaOrigen === t.cedulaDestino}
+                            <div class="tarjeta">
+                                <div class="hstack justify-between">
+                                    {#if esProfesor}
+                                        <span class="badge" data-variant={t.tipo === 'credito' ? 'success' : 'secondary'}>{t.tipo === 'credito' ? 'Acreditado' : 'Débito'}</span>
+                                    {:else}
+                                        <span class="badge" data-variant="warning">Transferencia</span>
+                                    {/if}
+                                    <span class="text-light">{t.timestamp}</span>
+                                </div>
+                                <p class="monto"><strong>${t.monto.toFixed(2)}</strong></p>
+                                <p>
+                                    {#if esProfesor}
+                                        {nombresPorCedula.get(t.cedulaOrigen) ?? t.cedulaOrigen}
+                                    {:else}
+                                        {nombresPorCedula.get(t.cedulaOrigen) ?? t.cedulaOrigen} → {nombresPorCedula.get(t.cedulaDestino) ?? t.cedulaDestino}
+                                    {/if}
+                                </p>
+                                {#if t.descripcion}
+                                    <p class="text-light">{t.descripcion}</p>
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+        </article>
+        </div>
     </main>
 
     <dialog id="dialog-creditar" bind:this={creditoDialog} closedby="any">
@@ -406,63 +439,81 @@
         color: var(--primary-foreground);
     }
 
+    .panel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--space-6);
+        align-items: start;
+        margin-top: var(--space-6);
+    }
+
+    .panel-grid .card {
+        margin-top: 0;
+    }
+
+    .pestanas-barra {
+        display: none;
+    }
+
+    .pestana-estudiantes,
+    .pestana-transacciones {
+        display: block;
+    }
+
+    .tarjetas {
+        display: grid;
+        gap: var(--space-3);
+        margin-top: var(--space-4);
+    }
+
+    .tarjeta {
+        padding: var(--space-4);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-medium);
+    }
+
+    .tarjeta .monto {
+        margin: var(--space-2) 0;
+        font-size: var(--text-4);
+    }
+
+    .tarjeta-estudiante {
+        gap: var(--space-4);
+    }
+
+    .tarjeta-estudiante .qr {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-small);
+        flex-shrink: 0;
+    }
+
+    .tarjeta-estudiante .cuerpo {
+        flex: 1;
+        min-width: 0;
+    }
+
     @media (max-width: 640px) {
-        .tabla-estudiantes thead {
+        .panel-grid {
+            display: block;
+        }
+
+        .panel-grid .card,
+        .pestanas-barra {
+            margin-top: var(--space-6);
+        }
+
+        .pestanas-barra {
+            display: inline-flex;
+        }
+
+        .pestana-estudiantes:not(.pestana-activa),
+        .pestana-transacciones:not(.pestana-activa) {
             display: none;
         }
 
-        .tabla-estudiantes,
-        .tabla-estudiantes tbody,
-        .tabla-estudiantes tr,
-        .tabla-estudiantes td {
-            display: block;
-            width: 100%;
-        }
-
-        .tabla-estudiantes {
-            min-width: 0;
-        }
-
-        .tabla-estudiantes tbody tr {
-            border: 1px solid var(--border);
-            border-radius: var(--radius-medium);
-            margin-bottom: var(--space-3);
-            padding: var(--space-2) var(--space-3);
-        }
-
-        .tabla-estudiantes td {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: var(--space-4);
-            padding: var(--space-2) 0;
-            border: none;
-        }
-
-        .tabla-estudiantes td::before {
-            content: attr(data-label);
-            font-weight: var(--font-semibold);
-            color: var(--muted-foreground);
-        }
-
-        .tabla-estudiantes td[data-label=""]::before {
-            display: none;
-        }
-
-        .tabla-estudiantes td:last-child {
-            display: block;
-            border-top: 1px solid var(--border);
-            margin-top: var(--space-2);
-            padding-top: var(--space-3);
-        }
-
-        .tabla-estudiantes td:last-child .hstack {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .tabla-estudiantes td:last-child button {
-            width: 100%;
+        .tarjeta-estudiante .hstack:last-child {
+            flex-wrap: wrap;
         }
     }
 </style>

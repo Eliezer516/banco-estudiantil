@@ -107,55 +107,33 @@
             {#if data.historial.length === 0}
                 <p class="text-light">Aún no tienes transacciones.</p>
             {:else}
-                <div class="table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tipo</th>
-                                <th>Monto</th>
-                                <th>Concepto</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {#each data.historial as t}
-                                {@const esOrigen = t.cedulaOrigen === data.estudiante.cedula}
-                                {@const esDestino = t.cedulaDestino === data.estudiante.cedula}
-                                {@const esProfesor = esOrigen && esDestino}
-                                {@const esCreditoProfesor = esProfesor && t.tipo === 'credito'}
-                                {@const esDebitoProfesor = esProfesor && t.tipo === 'debito'}
-                                {@const filaClase = esProfesor ? '' : esOrigen ? 'hist-debito' : 'hist-credito'}
-                                <tr class={filaClase}>
-                                    <td>
-                                        {#if esCreditoProfesor}
-                                            <span class="badge" data-variant="success">Acreditado</span>
-                                        {:else if esDebitoProfesor}
-                                            <span class="badge" data-variant="secondary">Débito</span>
-                                        {:else if esOrigen}
-                                            <span class="badge" data-variant="danger">Enviado</span>
-                                        {:else if esDestino}
-                                            <span class="badge" data-variant="success">Recibido</span>
-                                        {/if}
-                                    </td>
-                                    <td>
-                                        {#if esOrigen && esDestino}
-                                            ${t.monto.toFixed(2)}
-                                        {:else if esOrigen}
-                                            ${t.monto.toFixed(2)}
-                                        {:else if esDestino}
-                                            ${t.monto.toFixed(2)}
-                                        {/if}
-                                    </td>
-                                    <td>
-                                        {#if t.descripcion}
-                                            <span class="text-light">{t.descripcion}</span>
-                                        {/if}
-                                    </td>
-                                    <td>{t.timestamp}</td>
-                                </tr>
-                            {/each}
-                        </tbody>
-                    </table>
+                <div class="tarjetas">
+                    {#each data.historial as t}
+                        {@const esOrigen = t.cedulaOrigen === data.estudiante.cedula}
+                        {@const esDestino = t.cedulaDestino === data.estudiante.cedula}
+                        {@const esProfesor = esOrigen && esDestino}
+                        {@const esCreditoProfesor = esProfesor && t.tipo === 'credito'}
+                        {@const esDebitoProfesor = esProfesor && t.tipo === 'debito'}
+                        {@const filaClase = esProfesor ? '' : esOrigen ? 'hist-debito' : 'hist-credito'}
+                        <div class="tarjeta {filaClase}">
+                            <div class="hstack justify-between">
+                                {#if esCreditoProfesor}
+                                    <span class="badge" data-variant="success">Acreditado</span>
+                                {:else if esDebitoProfesor}
+                                    <span class="badge" data-variant="secondary">Débito</span>
+                                {:else if esOrigen}
+                                    <span class="badge" data-variant="danger">Enviado</span>
+                                {:else if esDestino}
+                                    <span class="badge" data-variant="success">Recibido</span>
+                                {/if}
+                                <span class="text-light">{t.timestamp}</span>
+                            </div>
+                            <p class="monto"><strong>${t.monto.toFixed(2)}</strong></p>
+                            {#if t.descripcion}
+                                <p class="text-light">{t.descripcion}</p>
+                            {/if}
+                        </div>
+                    {/each}
                 </div>
             {/if}
         </article>
@@ -379,6 +357,23 @@
         overflow-wrap: anywhere;
     }
 
+    .tarjetas {
+        display: grid;
+        gap: var(--space-3);
+        margin-top: var(--space-4);
+    }
+
+    .tarjeta {
+        padding: var(--space-4);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-medium);
+    }
+
+    .tarjeta .monto {
+        margin: var(--space-2) 0;
+        font-size: var(--text-4);
+    }
+
     .hist-debito {
         background-color: color-mix(in srgb, var(--danger) 10%, transparent);
     }
@@ -387,8 +382,8 @@
         background-color: color-mix(in srgb, var(--success) 10%, transparent);
     }
 
-    .table .hist-debito:hover,
-    .table .hist-credito:hover {
+    .hist-debito:hover,
+    .hist-credito:hover {
         background-color: color-mix(in srgb, var(--accent) 50%, transparent);
     }
 </style>
