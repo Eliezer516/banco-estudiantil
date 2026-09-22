@@ -43,15 +43,16 @@ Está pensado para funcionar en dispositivos móviles, con escaneo de códigos Q
 
 ### Portal del estudiante
 
-- **Inicio de sesión con cédula.** No requiere contraseña; cada estudiante accede introduciendo su número de cédula.
+- **Inicio de sesión con cédula y contraseña.** La primera vez, la contraseña por defecto es el número de cédula. Las contraseñas nuevas se guardan con hash (scrypt + sal).
+- **Cambio de contraseña.** Tras iniciar sesión, un aviso no invasivo recuerda cambiar la contraseña por defecto (que coincide con la cédula y podría conocer un compañero) e incluye un botón para hacerlo desde un diálogo.
 - **Tarjeta virtual.** Muestra el saldo actual, la cédula y un código QR propio que puede usarse para identificar al estudiante.
 - **Transferencias entre estudiantes.** Envío de puntos a otro compañero con descripción obligatoria.
   - Verificación de saldo y de destino.
   - Comprobante de la operación con botón de *compartir* (API nativa del dispositivo o copia al portapapeles).
 - **Historial de transacciones.** Listado ordenado por fecha con diferenciación visual por tipo:
-  - Débito (transferencia enviada): fila en rojo.
-  - Crédito (transferencia recibida): fila en verde.
-  - Operaciones del profesor (débito/crédito): fila neutra.
+  - Débito (transferencia enviada): tarjeta en rojo.
+  - Crédito (transferencia recibida): tarjeta en verde.
+  - Operaciones del profesor (débito/crédito): tarjeta neutra.
 
 ### Panel del profesor
 
@@ -142,10 +143,11 @@ npm run preview
 
 ### Portal del estudiante
 
-1. Introduce la cédula para iniciar sesión.
-2. Revisa el saldo en la tarjeta virtual.
-3. Para transferir: indica la cédula del destino, el monto y una descripción.
-4. El comprobante generado puede compartirse desde el propio diálogo.
+1. Introduce la cédula y tu contraseña para iniciar sesión. La primera vez, la contraseña es tu cédula.
+2. Si aún usas la contraseña por defecto, un aviso te recuerda cambiarla: usa el botón "Cambiar contraseña" (también quedará oculta en el header de tu cuenta).
+3. Revisa el saldo en la tarjeta virtual.
+4. Para transferir: indica la cédula del destino, el monto y una descripción.
+5. El comprobante generado puede compartirse desde el propio diálogo.
 
 ### Panel del profesor
 
@@ -161,11 +163,12 @@ npm run preview
 .
 ├── src/
 │   ├── lib/
-│   │   └── server/db/           # Cliente de BD y esquema (Drizzle)
+│   │   ├── server/auth.js        # Hash y verificación de contraseñas (scrypt)
+│   │   └── server/db/            # Cliente de BD y esquema (Drizzle)
 │   └── routes/
-│       ├── +layout.svelte       # Layout global, metadatos PWA
-│       ├── +page.svelte         # Portal del estudiante
-│       ├── +page.server.js      # Acciones: login, transfer, logout
+│       ├── +layout.svelte        # Layout global, metadatos PWA
+│       ├── +page.svelte          # Portal del estudiante
+│       ├── +page.server.js       # Acciones: login, cambiarPassword, transfer, logout
 │       └── profesor/
 │           ├── +page.svelte     # Panel del profesor
 │           ├── +page.server.js  # Acciones: login, debit, credito,
@@ -209,6 +212,7 @@ Las operaciones del profesor se registran con `cedula_origen` = `cedula_destino`
 ## Consideraciones de seguridad
 
 - **Autenticación del profesor** mediante contraseña en variable de entorno (`TEACHER_PASSWORD`), nunca en el código fuente.
+- **Contraseñas de estudiantes** guardadas con hash (scrypt) y sal única por usuario; la contraseña por defecto (cédula) no se almacena hasta que el estudiante la cambia.
 - **Sesiones** de estudiante y profesor mediante cookies `httpOnly` y `sameSite: lax`.
 - **Validación en el servidor** de todos los formularios (montos positivos, descripciones con longitud máxima, existencia del estudiante, saldo suficiente).
 - **Transferencias atómicas**: el registro de la transacción y la actualización de saldos ocurren dentro de una transacción de base de datos.
@@ -216,11 +220,11 @@ Las operaciones del profesor se registran con `cedula_origen` = `cedula_destino`
 
 ## Limitaciones y trabajo pendiente
 
-- **Autenticación del estudiante por cédula.** No requiere contraseña; adecuado para un entorno de aula controlado, pero no para un sistema público.
+- **Autenticación del estudiante por cédula + contraseña.** La contraseña por defecto coincide con la cédula hasta que el estudiante la cambia; si no se cambia, cualquiera que conozca la cédula podría acceder (por eso se avisa al iniciar sesión).
 - **Códigos QR externos.** Las imágenes se generan mediante el servicio `api.qrserver.com`, por lo que requieren conexión para mostrarse (el escaneo del QR en sí es solo el número de cédula).
 - **Sin multi-institucionalidad.** El modelo asume una única institución/curso por despliegue.
 - **Contraseña del profesor en un solo valor global**, sin gestión de múltiples usuarios.
-- *Roadmap sugerido:* autenticación por estudiante con PIN, generación local de códigos QR, exportación de historial y auditoría.
+- *Roadmap sugerido:* restablecimiento de contraseña gestionado por el profesor, generación local de códigos QR, exportación de historial y auditoría.
 
 ## Comandos de desarrollo
 

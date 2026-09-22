@@ -21,6 +21,12 @@ export const estudiantes = sqliteTable('estudiantes', {
   saldo: real('saldo').notNull().default(0),
   
   /**
+   * Contraseña del estudiante (hash con sal).
+   * Si es NULL, la contraseña por defecto es el número de cédula.
+   */
+  passwordHash: text('password_hash'),
+  
+  /**
    * URL de código QR generado para el estudiante.
    */
   qrCode: text('qr_code').notNull(),

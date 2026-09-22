@@ -6,6 +6,8 @@
     let recibo = $state(null);
     let transferirDialog = $state(null);
     let reciboDialog = $state(null);
+    let claveDialog = $state(null);
+    let avisoOculto = $state(false);
 
     let titulo = $derived(
         data.estudiante
@@ -29,6 +31,17 @@
                 recibo = result.data.recibo;
                 transferirDialog?.close();
                 reciboDialog?.showModal();
+            }
+        };
+    }
+
+    function claveEnhancer() {
+        return async ({ result, update }) => {
+            await update();
+
+            if (result.type === 'success' && result.data?.passOk) {
+                claveDialog?.close();
+                toast('Contraseña actualizada correctamente', 'Listo');
             }
         };
     }
@@ -78,6 +91,19 @@
                 </form>
             </div>
         </header>
+
+        {#if data.debeCambiarPassword && !avisoOculto}
+            <div class="aviso-clave mt-6" role="status">
+                <div class="aviso-clave-texto">
+                    <strong>Cambia tu contraseña</strong>
+                    <p class="text-light">Tu contraseña actual es tu cédula. Si un compañero la conoce, podría entrar a tu cuenta y transferir tus puntos. Te recomendamos cambiarla ahora.</p>
+                </div>
+                <div class="hstack">
+                    <button type="button" commandfor="dialog-cambiar-clave" command="show-modal">Cambiar contraseña</button>
+                    <button type="button" class="outline aviso-clave-cerrar" aria-label="Ocultar aviso" onclick={() => (avisoOculto = true)}>×</button>
+                </div>
+            </div>
+        {/if}
 
         <section class="virtual-card mt-6">
             <div class="vc-top">
@@ -191,23 +217,58 @@
             </footer>
         {/if}
     </dialog>
+
+    <dialog id="dialog-cambiar-clave" bind:this={claveDialog} closedby="any">
+        <form method="POST" action="?/cambiarPassword" use:enhance={claveEnhancer}>
+            <header>
+                <h3>Cambiar contraseña</h3>
+                <p class="text-light">Elige una contraseña nueva que solo tú conozcas.</p>
+            </header>
+            <div class="vstack">
+                <label data-field>
+                    Contraseña actual
+                    <input type="password" name="passwordActual" required autocomplete="current-password" placeholder="Tu cédula (por defecto)">
+                </label>
+                <label data-field>
+                    Nueva contraseña
+                    <input type="password" name="passwordNueva" minlength="4" required autocomplete="new-password">
+                </label>
+                <label data-field>
+                    Confirmar nueva contraseña
+                    <input type="password" name="passwordConfirmar" minlength="4" required autocomplete="new-password">
+                </label>
+                {#if form?.passError}
+                    <div role="alert" data-variant="error">{form.passError}</div>
+                {/if}
+            </div>
+            <footer>
+                <button type="button" commandfor="dialog-cambiar-clave" command="close" class="outline">Cancelar</button>
+                <button>Guardar contraseña</button>
+            </footer>
+        </form>
+    </dialog>
 {:else}
     <main class="container login mt-8 mb-8">
         <article class="card" style="max-width: 420px;">
             <header>
                 <h1>Iniciar sesión</h1>
-                <p class="text-light">Ingresa tu cédula para ver tu información.</p>
+                <p class="text-light">Ingresa tu cédula y tu contraseña.</p>
             </header>
             <form method="POST" action="?/login" class="vstack" use:enhance>
                 <label data-field>
                     Cédula
-                    <input type="number" name="cedula" required>
+                    <input type="number" name="cedula" required autofocus>
+                </label>
+                <label data-field>
+                    Contraseña
+                    <input type="password" name="password" required autocomplete="current-password" placeholder="Tu cédula (por defecto)">
                 </label>
                 <button>Entrar</button>
             </form>
             {#if form?.loginError}
                 <div role="alert" data-variant="error" class="mt-4">{form.loginError}</div>
             {/if}
+            <p class="text-light mt-4" style="font-size: var(--text-7);">La primera vez tu contraseña es tu número de cédula. Al ingresar podrás cambiarla por seguridad.</p>
         </article>
     </main>
 {/if}
@@ -385,5 +446,49 @@
     .hist-debito:hover,
     .hist-credito:hover {
         background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    }
+
+    .aviso-clave {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--space-5);
+        padding: var(--space-4) var(--space-5);
+        border: 1px solid color-mix(in srgb, var(--warning) 45%, var(--border));
+        border-radius: var(--radius-medium);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+    }
+
+    .aviso-clave-texto {
+        max-width: 56ch;
+    }
+
+    .aviso-clave p {
+        margin: var(--space-1) 0 0;
+    }
+
+    .aviso-clave .hstack {
+        flex-shrink: 0;
+    }
+
+    .aviso-clave-cerrar {
+        width: 2.25rem;
+        height: 2.25rem;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        font-size: var(--text-4);
+        line-height: 1;
+    }
+
+    .aviso-clave-cerrar:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+
+    @media (max-width: 640px) {
+        .aviso-clave {
+            flex-direction: column;
+        }
     }
 </style>

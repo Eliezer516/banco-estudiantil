@@ -3,11 +3,22 @@ import { randomBytes } from 'node:crypto';
 import { and, eq, or, desc } from 'drizzle-orm'
 import { db } from '../lib/server/db/index.js'
 import { estudiantes, transacciones } from '../lib/server/db/schema.js'
+import { hashPassword, verifyPassword } from '../lib/server/auth.js'
 
 const SESSION_COOKIE = 'student_session';
 
 function formatTimestamp(date = new Date()) {
     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+}
+
+function publico(estudiante) {
+    return {
+        cedula: estudiante.cedula,
+        apellidos: estudiante.apellidos,
+        nombres: estudiante.nombres,
+        saldo: estudiante.saldo,
+        qrCode: estudiante.qrCode
+    };
 }
 
 /** @type {import('./$types').PageServerLoad} */
@@ -29,22 +40,35 @@ export async function load({ cookies }) {
         )
     ).orderBy(desc(transacciones.timestamp));
 
-    return { estudiante, historial };
+    return {
+        estudiante: publico(estudiante),
+        debeCambiarPassword: !estudiante.passwordHash,
+        historial
+    };
 }
 
 export const actions = {
     login: async ({ request, cookies }) => {
         const data = Object.fromEntries(await request.formData());
         const cedula = Number(data.cedula);
+        const password = String(data.password ?? '');
 
-        if (Number.isNaN(cedula)) {
-            return fail(400, { loginError: 'Cédula inválida' });
+        if (Number.isNaN(cedula) || !password) {
+            return fail(400, { loginError: 'Ingresa tu cédula y tu contraseña' });
         }
 
         const estudiante = await db.select().from(estudiantes).where(eq(estudiantes.cedula, cedula)).get();
 
         if (!estudiante) {
             return fail(400, { loginError: 'Estudiante no encontrado' });
+        }
+
+        const contrasenaValida = estudiante.passwordHash
+            ? verifyPassword(password, estudiante.passwordHash)
+            : password === String(cedula);
+
+        if (!contrasenaValida) {
+            return fail(401, { loginError: 'Contraseña incorrecta. Si es tu primer ingreso, tu clave es tu cédula.' });
         }
 
         cookies.set(SESSION_COOKIE, String(cedula), {
@@ -57,6 +81,44 @@ export const actions = {
 
     logout: async ({ cookies }) => {
         cookies.delete(SESSION_COOKIE, { path: '/' });
+    },
+
+    cambiarPassword: async ({ request, cookies }) => {
+        const cedula = Number(cookies.get(SESSION_COOKIE));
+        if (Number.isNaN(cedula)) {
+            return fail(401, { passError: 'Debes iniciar sesión' });
+        }
+
+        const data = Object.fromEntries(await request.formData());
+        const actual = String(data.passwordActual ?? '');
+        const nueva = String(data.passwordNueva ?? '');
+        const confirmacion = String(data.passwordConfirmar ?? '');
+
+        const estudiante = await db.select().from(estudiantes).where(eq(estudiantes.cedula, cedula)).get();
+        if (!estudiante) {
+            return fail(401, { passError: 'Debes iniciar sesión' });
+        }
+
+        const valida = estudiante.passwordHash
+            ? verifyPassword(actual, estudiante.passwordHash)
+            : actual === String(cedula);
+
+        if (!valida) {
+            return fail(400, { passError: 'La contraseña actual es incorrecta' });
+        }
+        if (nueva.length < 4) {
+            return fail(400, { passError: 'La contraseña debe tener al menos 4 caracteres' });
+        }
+        if (nueva === String(cedula)) {
+            return fail(400, { passError: 'La contraseña no puede ser igual a tu cédula' });
+        }
+        if (nueva !== confirmacion) {
+            return fail(400, { passError: 'Las contraseñas no coinciden' });
+        }
+
+        await db.update(estudiantes).set({ passwordHash: hashPassword(nueva) }).where(eq(estudiantes.cedula, cedula));
+
+        return { passOk: true };
     },
 
     transfer: async ({ request, cookies }) => {

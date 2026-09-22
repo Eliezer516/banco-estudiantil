@@ -321,6 +321,7 @@ export const actions = {
             if (existe) {
                 return fail(400, { editarError: 'Ya existe un estudiante con esa cédula' });
             }
+            const original = await db.select().from(estudiantes).where(eq(estudiantes.cedula, cedulaOriginal)).get();
             await db.transaction(async (tx) => {
                 await tx.delete(transacciones).where(eq(transacciones.cedulaOrigen, cedulaOriginal));
                 await tx.delete(estudiantes).where(eq(estudiantes.cedula, cedulaOriginal));
@@ -329,6 +330,7 @@ export const actions = {
                     nombres,
                     apellidos,
                     saldo,
+                    passwordHash: original?.passwordHash ?? null,
                     qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${cedula}`
                 });
             });
