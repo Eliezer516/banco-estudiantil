@@ -1,4 +1,4 @@
-const CACHE = 'banco-estudiantil-v1';
+const CACHE = 'banco-estudiantil-v2';
 const PRECACHE = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -24,6 +24,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     if (request.method !== 'GET') return;
+
+    const url = new URL(request.url);
+
+    if (url.searchParams.has('_sveltekit_data')) return;
 
     if (request.mode === 'navigate') {
         event.respondWith(
